@@ -1,0 +1,181 @@
+--------------- Q1 -----------------
+
+What is tokenization? Give an example —
+show how the sentence "I'm learning NLP in 2025!" would be tokenized.
+Expected: a list of tokens and a one-sentence explanation of what tokenization does and why it's the first step in NLP.
+
+--------------- A1 -----------------
+tokenization breaks a sentence into words, numbers, and punctuation so the computer can understand and process the text.
+which is why it is usually the first step in NLP.
+
+example sentence:
+"I'm learning NLP in 2025!"
+
+possible tokens as list:
+["I", "'m", "learning", "NLP", "in", "2025", "!"]
+
+--------------- Q2 -----------------
+What is the difference between stemming and lemmatization? Apply both to the words "running" and "better" and explain which preserves more linguistic meaning.
+Hint: stemming is fast but crude (cuts off suffixes). Lemmatization uses a dictionary to find the base form.
+
+--------------- A2 -----------------
+both of them reduce words to a simpler form, but do it differently:
+stemming is faster but more crude, it my not understand the meaning of the word after cutting its end.
+lemmatization uses a dictionary and grammar rules to find the base form of the word.
+lemma- better --> good, running --> run
+stemming- better --> better, running --> run
+
+--------------- Q3 -----------------
+What does TF-IDF stand for? Explain in plain language why the word "the" scores almost zero in TF-IDF, while the word "photosynthesis" would score high.
+Think about: what makes a word useful for identifying a specific document among many documents?
+
+--------------- A3 -----------------
+TF-IDF stands for Term Frequency–Inverse Document Frequency.
+in plain language, TF-IDF gives a word a high score when it appears often in one document but does not appear often in many other documents.
+"the" is a common word that takes place in almost every document, while "photosynthesis" appears in much fewer documents.
+after knowing what words have grate value in a document it will be easier to find it and its info.
+
+--------------- Q4 -----------------
+What is a sentence embedding? How is it fundamentally different from one-hot encoding? Give one advantage embeddings have that one-hot vectors don't.
+Think about: what can you measure between two embeddings that you can't measure between two one-hot vectors?
+
+--------------- A4 -----------------
+a sentence embedding is a way to represent an entire sentence as a list of numbers, called a vector, where the meaning of the sentence is captured in the numbers.
+a one-hot encoding represents words or sentences as mostly zeros with a single 1, but it does not understand meaning.
+with embedding we can write a sentence and even if we didn't use the exact words that writen in the document we still get the meaning
+
+--------------- Q5 -----------------
+Explain cosine similarity in plain language. If two document vectors point in almost the same direction, what does that tell us about the documents they represent?
+You don't need to write the formula — a geometric or intuitive explanation is enough.
+Bonus (+0.5 optional): When might Euclidean distance be a poor choice for comparing embeddings?
+
+--------------- A5 -----------------
+cosine similarity compares the direction of two vectors, if two vectors points at the same direction then they have the same topic or the same meaning --> same semantics
+bonus:
+euclidean distance can be a poor choice for embeddings when vector length is not important.
+a long document might have a larger vector magnitude than a short document, even if both are about the same topic.
+cosine similarity handles this better because it focuses on direction, not size.
+
+--------------- Q6 -----------------
+Why can't a regular SQL query like WHERE description LIKE '%pizza%' find semantically similar documents? What does a vector index solve that SQL can't?
+Example to think about: "Italian food" and "pasta and risotto" — one contains the word, the other doesn't, but they're about the same topic.
+
+--------------- A6 -----------------
+that query in SQL search for the word "pizza" while vector index will search for words from the same category.
+SQL doesn't understand meaning, it only checks for a certain text, vector index search for similarity.
+
+--------------- Q7 -----------------
+What problem does RAG solve that a plain LLM (without RAG) cannot? Give a concrete example of when you would choose RAG over just prompting the LLM directly.
+Think about: knowledge cutoffs, private data, hallucinations, up-to-date information.
+
+--------------- A7 -----------------
+with RAG we can get information from websites and documents and then the LLM can give us answers based on that information.
+without RAG the LLM can give us guessed answers based on information he already has.
+exemple: if a company will ask the LLM what is the cost of their pet insurance, the LLM(no RAG) will return an answer based on general insurances.
+
+--------------- Q8 -----------------
+Describe the 3 main steps of a RAG pipeline in the correct order. Be clear about what happens at ingestion time (when you load documents) vs query time (when a user asks a question).
+The 3 steps are: chunk → embed → store (ingestion) and embed query → retrieve → generate (query time).
+
+--------------- A8 -----------------
+ingestion time:
+chunk --> split long documents into smaller pieces that called chunks.
+embed --> converts the chunks into vectors that represent their meaning.
+store --> save the chunks and their embeddings in a database.
+
+query time:
+embed query --> converts the user's question into an embedding.
+retrieve --> search the database for chunks with similar meaning.
+generate --> give the retrieved chunks to the LLM so it could write an answer based on them.
+
+--------------- Q9 -----------------
+What is the difference between a Docker image and a Docker container? Use an analogy to explain.
+Common analogies: class vs instance, recipe vs cake, blueprint vs building. Any analogy that works is fine.
+
+--------------- A9 -----------------
+a docker image is some sort of structure.
+a docker container is the actual running thing that was created from that image.
+
+image --> recipe --> instructions and ingredients to make a cake.
+container --> cake --> the actual proses of making the cake.
+
+--------------- Q10 -----------------
+What is the difference between a simple LLM chatbot and an AI agent with tools? Give one concrete example of a "tool" and explain why it makes the agent more capable.
+Think about: what can an agent do that a plain LLM cannot? (e.g., look things up in real-time, run code, query a database, send an email...)
+
+--------------- A10 -----------------
+a simple LLM chatbot can only answer using text it already knows from training and the prompt you give it.
+an AI agent with tools can also take actions or access external systems, such as searching the web, running code, querying a database, or sending an email.
+
+if the user ask a plain LLM "how many dogs got adopted from the shelter in the last 3 days" the LLM will give a guess or write a SQL query to find it.
+an AI agent with a database tool will query the database bby himself --> will get the result --> return the answer to the user.
+
+in conclusion, an agent do actions and talk while chatbot only talks.
+
+--------------- Q11 -----------------
+What is MCP (Model Context Protocol)? What problem does it solve for AI coding assistants like GitHub Copilot? Name two examples of things an MCP server might expose to an AI assistant.
+Think about: how does a language model normally know about your database, your files, or your GitHub issues? What does MCP standardize?
+💡 Examples of MCP servers: filesystem access, database queries, GitHub API, web search, browser automation…
+
+--------------- A11 -----------------
+it is an open standard/protocol that lets AI applications connect to external tools, data sources, and services in a consistent way
+for AI coding assistants like GitHub Copilot, MCP solves the problem of missing context.
+a language model normally does not automatically know what is inside your database, local files, GitHub issues, pull requests, or project tools.
+MCP lets Copilot connect to those systems through MCP servers, so it can use real project context rather than only guessing from the prompt.
+
+2 examples:
+repositories in GitHub
+last things searched in the web
+
+--------------- Q12 -----------------
+What are Agent Skills in the context of AI coding assistants? How are they different from just writing instructions in a plain prompt? Show a minimal example of what a skill's .md metadata block might look like.
+Think about: a skill has a name, a description, and a path to a detailed instructions file — it lets the AI decide when to activate domain-specific knowledge automatically.
+
+--------------- A12 -----------------
+agent skills are reusable, task-specific instruction packages that an AI coding assistant can load when they are relevant.
+a skill usually contains metadata like a name and description, plus a path to a detailed instructions file such as "SKILL.md".
+modern skill systems describe skills as packages of instructions, metadata, and sometimes resources like scripts or templates.
+a skill is saved once and can be discovered automatically.
+the assistant reads the skill description, decides when it matches the user’s task, and then loads the detailed instructions.
+this is useful for coding assistants because skills can package domain-specific workflows, best practices, and project conventions instead of repeating them in every chat.
+
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    restart: unless-stopped
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+# - WEBHOOK_URL=https://eucarpic-manda-unshrinking.ngrok-free.dev
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
