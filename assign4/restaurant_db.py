@@ -102,8 +102,8 @@ def _seed_if_empty(conn: sqlite3.Connection) -> None:
             """,
             (
                 "Sunset Bistro",
-                "123 Market Street, Springfield",
-                "+1-555-0142",
+                "123 Dizengoff Street, Tel Aviv",
+                "03-555-0142",
                 "hello@sunsetbistro.example",
                 "www.sunsetbistro.example",
             ),

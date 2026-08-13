@@ -329,12 +329,27 @@ def handle_cancellation(user_message: str) -> str:
 def handle_menu(user_message: str) -> str:
     """Answer menu questions."""
 
-    items = search_menu_items(DB_PATH, user_message)
+    message = user_message.lower()
+
+    general_menu_words = [
+        "menu",
+        "food",
+        "dishes",
+        "what do you have",
+        "what can i eat",
+        "show me the menu",
+        "full menu",
+    ]
+
+    if any(phrase in message for phrase in general_menu_words):
+        items = get_menu_items(DB_PATH)
+    else:
+        items = search_menu_items(DB_PATH, user_message)
 
     if not items:
         return "I could not find matching menu items."
 
-    answer_lines = ["Here are the matching menu items:"]
+    answer_lines = ["Here is our menu:"]
 
     for item in items:
         vegetarian_text = "vegetarian" if item["is_vegetarian"] else "not vegetarian"
