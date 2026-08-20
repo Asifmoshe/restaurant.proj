@@ -8,21 +8,26 @@ This file does the main chatbot work:
 5. Sends reservation/cancellation events to n8n using a webhook
 """
 
+import json
 import os
 import re
 from typing import Any, Dict, Optional
 import requests
+from dotenv import load_dotenv
+from openai import OpenAI
 
 from restaurant_db import (
     book_reservation,
     cancel_reservation,
     get_menu_items,
+    get_reservation_by_id,
     get_reservations,
     get_restaurant_details_and_hours,
     initialize_database,
     search_menu_items,
 )
 
+load_dotenv()
 
 DB_PATH = "restaurant.sqlite"
 
@@ -171,16 +176,85 @@ def extract_time(user_message: str) -> Optional[str]:
 
     return None
 
+def extract_reservation_details_with_llm(user_message: str) -> Optional[Dict[str, Any]]:
+    """Use OpenAI to extract reservation details from natural language."""
+
+    if not os.getenv("OPENAI_API_KEY"):
+        return None
+
+    client = OpenAI()
+
+    prompt = f"""
+You are extracting restaurant reservation details from a user message.
+
+Return ONLY valid JSON.
+Do not add explanations.
+Do not use markdown.
+
+Required JSON fields:
+- customer_name: string or null
+- reservation_date: string in YYYY-MM-DD format or null
+- reservation_time: string in HH:MM 24-hour format or null
+- party_size: integer or null
+- contact: email or phone string or null
+
+Rules:
+- If a detail is missing, use null.
+- Do not invent missing details.
+- If the user gives an email, put it in contact.
+- If the user gives a phone number, put it in contact.
+
+User message:
+{user_message}
+"""
+
+    try:
+        response = client.responses.create(
+            model=os.getenv("OPENAI_MODEL", "gpt-5-mini"),
+            input=prompt,
+        )
+
+        text = response.output_text.strip()
+
+        # Safety cleanup in case the model wraps JSON in a code block.
+        text = text.replace("```json", "").replace("```", "").strip()
+
+        data = json.loads(text)
+
+        return {
+            "customer_name": data.get("customer_name"),
+            "reservation_date": data.get("reservation_date"),
+            "reservation_time": data.get("reservation_time"),
+            "party_size": data.get("party_size"),
+            "contact": data.get("contact"),
+        }
+
+    except Exception as error:
+        print(f"OpenAI extraction failed: {error}")
+        return None
 
 def extract_reservation_details(user_message: str) -> Dict[str, Any]:
-    """Extract reservation details from the user message."""
+    """Extract reservation details using OpenAI first, with regex fallback."""
 
-    return {
+    regex_details = {
         "customer_name": extract_name(user_message),
         "reservation_date": extract_date(user_message),
         "reservation_time": extract_time(user_message),
         "party_size": extract_party_size(user_message),
         "contact": extract_email_or_phone(user_message),
+    }
+
+    llm_details = extract_reservation_details_with_llm(user_message)
+
+    if llm_details is None:
+        return regex_details
+
+    return {
+        "customer_name": llm_details.get("customer_name") or regex_details["customer_name"],
+        "reservation_date": llm_details.get("reservation_date") or regex_details["reservation_date"],
+        "reservation_time": llm_details.get("reservation_time") or regex_details["reservation_time"],
+        "party_size": llm_details.get("party_size") or regex_details["party_size"],
+        "contact": llm_details.get("contact") or regex_details["contact"],
     }
 
 
@@ -281,6 +355,7 @@ def handle_reservation(user_message: str) -> str:
 
     if webhook_sent:
         answer += "\nNotification sent to n8n."
+        answer += "\nEmail sent through Gmail."
     else:
         answer += "\nReservation was saved, but n8n notification was not sent yet."
 
@@ -298,6 +373,17 @@ def handle_cancellation(user_message: str) -> str:
             "Example: Cancel reservation ID 1"
         )
 
+    reservation = get_reservation_by_id(
+        db_path=DB_PATH,
+        reservation_id=reservation_id,
+    )
+
+    if reservation is None or reservation["status"] != "booked":
+        return (
+            f"I could not cancel reservation ID {reservation_id}. "
+            "It may not exist or it may already be cancelled."
+        )
+
     was_cancelled = cancel_reservation(
         db_path=DB_PATH,
         reservation_id=reservation_id,
@@ -313,6 +399,11 @@ def handle_cancellation(user_message: str) -> str:
         event_type="cancellation",
         payload={
             "reservation_id": reservation_id,
+            "customer_name": reservation["customer_name"],
+            "reservation_date": reservation["reservation_date"],
+            "reservation_time": reservation["reservation_time"],
+            "party_size": reservation["party_size"],
+            "contact": reservation["contact"],
         },
     )
 
@@ -320,6 +411,7 @@ def handle_cancellation(user_message: str) -> str:
 
     if webhook_sent:
         answer += "\nCancellation notification sent to n8n."
+        answer += "\nEmail sent through Gmail."
     else:
         answer += "\nCancellation was saved, but n8n notification was not sent yet."
 

@@ -255,6 +255,26 @@ def book_reservation(
 
     return int(reservation_id)
 
+def get_reservation_by_id(db_path: str, reservation_id: int) -> Dict[str, Any] | None:
+    """Return one reservation by ID, or None if it does not exist."""
+
+    with sqlite3.connect(db_path) as conn:
+        conn.row_factory = sqlite3.Row
+
+        row = conn.execute(
+            """
+            SELECT id, customer_name, reservation_date, reservation_time,
+                   party_size, contact, status, created_at
+            FROM reservations
+            WHERE id = ?
+            """,
+            (reservation_id,),
+        ).fetchone()
+
+    if row is None:
+        return None
+
+    return dict(row)
 
 def cancel_reservation(db_path: str, reservation_id: int) -> bool:
     """Cancel a reservation by ID. Return True if a row was updated."""

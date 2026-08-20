@@ -3,3 +3,4 @@ langchain-openai
 gradio
 python-dotenv
 requests
+openai
